@@ -45,15 +45,17 @@ Skip down to Step 3 to work on EDA.
 
 ## **File 1: `auc.csv`**
 
-`stim`: Stimulus video (levels/labels provided below).
+Columns:
 
-`id`: Unique participant identifier.
+-   `stim`: Stimulus video (levels/labels provided below).
 
-`age`: Age in days.
+-   `id`: Unique participant identifier.
 
-`AUC_sal`: Area-under-the-curve for a saliency model.
+-   `age`: Age in days.
 
-`AUC_dist`: Area-under-the-curve for a distance model.
+-   `AUC_sal`: Area-under-the-curve for a saliency model.
+
+-   `AUC_dist`: Area-under-the-curve for a distance model.
 
 AUC values indicate how well each model predicted where participants looked when watching a video.\
 
@@ -61,18 +63,22 @@ AUC values can range from **0-1**, where **0.5** is chance and **1** is perfect 
 
 ### **File 2: `participants_info_full_headers.csv`**
 
-`id`: Unique participant identifier (matches `auc.csv`).
+Columns:
 
-`age_group`: A categorical age variable with levels:
+-   `id`: Unique participant identifier (matches `auc.csv`).
 
-`.5-1 y`, `1-1.5 y`, `1.5-2 y`, `2-4 y`, `4-6 y`, `8-10 y`, `adult`.
+-   `age_group`: A categorical age variable with levels:
 
-`precision`: A quality measure of the eye data (smaller is better).
+-   `.5-1 y`, `1-1.5 y`, `1.5-2 y`, `2-4 y`, `4-6 y`, `8-10 y`, `adult`.
 
-7 columns of `"Seen X"`: The stimulus video before the study, coded as:
-**1** = SEEN, **2** = NOT SEEN, **3** = NOT SURE.
+-   `precision`: A quality measure of the eye data (smaller is better).
 
-## Step 1: Read in the AUC Data and Code `stim` as a Factor
+-   7 columns of `"Seen X"`: The stimulus video before the study, coded as:
+    **1** = SEEN, **2** = NOT SEEN, **3** = NOT SURE.
+
+## Step 1: Read in the AUC Data
+
+### Code `stim` as a Factor
 
 ```{r}
 auc <- read_csv("/Users/mayong/Desktop/auc_bystim.csv")
@@ -104,12 +110,11 @@ ppt <- read_csv("/Users/mayong/Desktop/participants_info_full_headers.csv") %>%
   rename(
     id        = `participant ID`,
     age_group = `Age group`,
-    precision = "Precision"
-  )
+    precision = "Precision")
 
 ```
 
-### Reshape the dataset
+### 
 
 
 Each question about watching each video is a column, so use pivot_longer().
@@ -126,7 +131,7 @@ ppt_long <- ppt %>%
   separate(stim, into = c(NA, "stim"))
 ```
 
-### Convert `stim` and `watched` to factors
+### Code `stim` and `watched` as factors
 
 ```{r}
 ppt_long <- ppt_long %>%
@@ -136,9 +141,7 @@ ppt_long <- ppt_long %>%
   )
 ```
 
-### **Merge the datasets**
-
-Join the participant data to the AUC data (by `id` and `stim`, since each participant has observations for each stimulus).
+Join the participant data to the AUC data (by `id` and `stim`, since each participant has observations for each stim).
 
 ```{r}
 ds <- left_join(auc, ppt_long, by = c("id", "stim"))
@@ -147,7 +150,7 @@ ds <- ds %>% drop_na(AUC_sal:AUC_dist)
 
 ```
 
-### Save the cleaned dataset
+### Write the data to file
 
 ```{r}
 ds %>% write_csv("/Users/mayong/Desktop/cleaned.csv")
@@ -173,7 +176,9 @@ ds %>%
 
 ```
 
-### Identify participants with precision `> 2.5`
+    `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+### Create a summary to figure out which participants would we need to exclude if \> 2.5 meant the data are unuseable?
 
 ```{r}
 ds %>%
@@ -188,7 +193,10 @@ ds %>% filter(precision > 2.5)
 
 ```
 
-### Summarize precision by age group
+    `summarise()` has grouped output by 'id'. You can override using the `.groups`
+    argument.
+
+### Use a summary table and plots to investigate whether data equally precise for participants of different ages
 
 ```{r}
 ds %>%
@@ -230,6 +238,9 @@ ds <- ds %>% mutate(age_years = age / 365.25)
 
 ```
 
+    `summarise()` has grouped output by 'id'. You can override using the `.groups`
+    argument.
+
 ### Visualize age in years by `age_group`
 
 ```{r}
@@ -241,7 +252,7 @@ ds %>%
 
 ```
 
-### Facet by `age_group` with free scales
+### Another option would be to facet by age group and to let the scales be \"free\" to get a better look
 
 ```{r}
 ds %>%
@@ -253,7 +264,10 @@ ds %>%
 
 ```
 
-### Create a summary table of age in years by age group
+    `summarise()` has grouped output by 'id'. You can override using the `.groups`
+    argument.
+
+### Make a summary table of age in years by age group to check whether all participants\' ages are correct
 
 ```{r}
 ds %>%
